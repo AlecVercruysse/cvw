@@ -1,20 +1,10 @@
 ///////////////////////////////////////////
 // ../wally-riscv-arch-test/riscv-test-suite/rv64i_m/I/src/WALLY-SLTU.S
 // David_Harris@hmc.edu & Katherine Parry
-// Created 2022-06-17 22:58:09.917963//
+// Created 2023-02-14 06:53:36.155782//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
-// is furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
-// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ///////////////////////////////////////////
 
 #include "model_test.h"
@@ -27,81 +17,82 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",temp)
+
+
 RVTEST_SIGBASE( x6, wally_signature)
 
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",sltu)
+# Testcase 0:  rs1:x30(0x0000000000000000), rs2:x29(0x0000000000000000), result rd:x31(0x0000000000000000)
+li x30, MASK_XLEN(0x0000000000000000)
+li x29, MASK_XLEN(0x0000000000000000)
+SLTU x31, x30, x29
+sd x31, 0(x6)
 
-# Testcase 0:  rs1:x22(0x0000000000000000), rs2:x23(0x0000000000000000), result rd:x2(0x0000000000000000)
-li x22, MASK_XLEN(0x0000000000000000)
-li x23, MASK_XLEN(0x0000000000000000)
-SLTU x2, x22, x23
-sd x2, 0(x6)
+# Testcase 1:  rs1:x18(0x0000000000000000), rs2:x21(0x0000000000000001), result rd:x11(0x0000000000000001)
+li x18, MASK_XLEN(0x0000000000000000)
+li x21, MASK_XLEN(0x0000000000000001)
+SLTU x11, x18, x21
+sd x11, 8(x6)
 
-# Testcase 1:  rs1:x15(0x0000000000000000), rs2:x17(0x0000000000000001), result rd:x29(0x0000000000000001)
-li x15, MASK_XLEN(0x0000000000000000)
-li x17, MASK_XLEN(0x0000000000000001)
-SLTU x29, x15, x17
-sd x29, 8(x6)
+# Testcase 2:  rs1:x4(0x0000000000000000), rs2:x18(0xffffffffffffffff), result rd:x19(0x0000000000000001)
+li x4, MASK_XLEN(0x0000000000000000)
+li x18, MASK_XLEN(0xffffffffffffffff)
+SLTU x19, x4, x18
+sd x19, 16(x6)
 
-# Testcase 2:  rs1:x16(0x0000000000000000), rs2:x30(0xffffffffffffffff), result rd:x18(0x0000000000000001)
-li x16, MASK_XLEN(0x0000000000000000)
-li x30, MASK_XLEN(0xffffffffffffffff)
-SLTU x18, x16, x30
-sd x18, 16(x6)
-
-# Testcase 3:  rs1:x20(0x0000000000000001), rs2:x25(0x0000000000000000), result rd:x1(0x0000000000000000)
-li x20, MASK_XLEN(0x0000000000000001)
-li x25, MASK_XLEN(0x0000000000000000)
-SLTU x1, x20, x25
-sd x1, 24(x6)
-
-# Testcase 4:  rs1:x29(0x0000000000000001), rs2:x2(0x0000000000000001), result rd:x16(0x0000000000000000)
+# Testcase 3:  rs1:x29(0x0000000000000001), rs2:x5(0x0000000000000000), result rd:x31(0x0000000000000000)
 li x29, MASK_XLEN(0x0000000000000001)
-li x2, MASK_XLEN(0x0000000000000001)
-SLTU x16, x29, x2
-sd x16, 32(x6)
+li x5, MASK_XLEN(0x0000000000000000)
+SLTU x31, x29, x5
+sd x31, 24(x6)
 
-# Testcase 5:  rs1:x11(0x0000000000000001), rs2:x10(0xffffffffffffffff), result rd:x27(0x0000000000000001)
+# Testcase 4:  rs1:x5(0x0000000000000001), rs2:x26(0x0000000000000001), result rd:x8(0x0000000000000000)
+li x5, MASK_XLEN(0x0000000000000001)
+li x26, MASK_XLEN(0x0000000000000001)
+SLTU x8, x5, x26
+sd x8, 32(x6)
+
+# Testcase 5:  rs1:x11(0x0000000000000001), rs2:x17(0xffffffffffffffff), result rd:x8(0x0000000000000001)
 li x11, MASK_XLEN(0x0000000000000001)
+li x17, MASK_XLEN(0xffffffffffffffff)
+SLTU x8, x11, x17
+sd x8, 40(x6)
+
+# Testcase 6:  rs1:x10(0xffffffffffffffff), rs2:x12(0x0000000000000000), result rd:x14(0x0000000000000000)
 li x10, MASK_XLEN(0xffffffffffffffff)
-SLTU x27, x11, x10
-sd x27, 40(x6)
+li x12, MASK_XLEN(0x0000000000000000)
+SLTU x14, x10, x12
+sd x14, 48(x6)
 
-# Testcase 6:  rs1:x15(0xffffffffffffffff), rs2:x2(0x0000000000000000), result rd:x26(0x0000000000000000)
-li x15, MASK_XLEN(0xffffffffffffffff)
-li x2, MASK_XLEN(0x0000000000000000)
-SLTU x26, x15, x2
-sd x26, 48(x6)
+# Testcase 7:  rs1:x22(0xffffffffffffffff), rs2:x2(0x0000000000000001), result rd:x28(0x0000000000000000)
+li x22, MASK_XLEN(0xffffffffffffffff)
+li x2, MASK_XLEN(0x0000000000000001)
+SLTU x28, x22, x2
+sd x28, 56(x6)
 
-# Testcase 7:  rs1:x27(0xffffffffffffffff), rs2:x29(0x0000000000000001), result rd:x26(0x0000000000000000)
-li x27, MASK_XLEN(0xffffffffffffffff)
-li x29, MASK_XLEN(0x0000000000000001)
-SLTU x26, x27, x29
-sd x26, 56(x6)
+# Testcase 8:  rs1:x5(0xffffffffffffffff), rs2:x20(0xffffffffffffffff), result rd:x1(0x0000000000000000)
+li x5, MASK_XLEN(0xffffffffffffffff)
+li x20, MASK_XLEN(0xffffffffffffffff)
+SLTU x1, x5, x20
+sd x1, 64(x6)
 
-# Testcase 8:  rs1:x14(0xffffffffffffffff), rs2:x7(0xffffffffffffffff), result rd:x18(0x0000000000000000)
-li x14, MASK_XLEN(0xffffffffffffffff)
-li x7, MASK_XLEN(0xffffffffffffffff)
-SLTU x18, x14, x7
-sd x18, 64(x6)
+# Testcase 9:  rs1:x5(0x13f2a37c64d02759), rs2:x14(0x12bdf75fb3c161c3), result rd:x10(0x0000000000000000)
+li x5, MASK_XLEN(0x13f2a37c64d02759)
+li x14, MASK_XLEN(0x12bdf75fb3c161c3)
+SLTU x10, x5, x14
+sd x10, 72(x6)
 
-# Testcase 9:  rs1:x3(0xf689a4a5ffda0336), rs2:x27(0xfa83ada4a2121ac5), result rd:x24(0x0000000000000001)
-li x3, MASK_XLEN(0xf689a4a5ffda0336)
-li x27, MASK_XLEN(0xfa83ada4a2121ac5)
-SLTU x24, x3, x27
-sd x24, 72(x6)
-
-# Testcase 10:  rs1:x31(0xfca055362169df82), rs2:x22(0x66dd779403c54c71), result rd:x14(0x0000000000000000)
-li x31, MASK_XLEN(0xfca055362169df82)
-li x22, MASK_XLEN(0x66dd779403c54c71)
-SLTU x14, x31, x22
+# Testcase 10:  rs1:x5(0x6ab015638cffbbb1), rs2:x19(0xed28508dbdaa3bfa), result rd:x14(0x0000000000000001)
+li x5, MASK_XLEN(0x6ab015638cffbbb1)
+li x19, MASK_XLEN(0xed28508dbdaa3bfa)
+SLTU x14, x5, x19
 sd x14, 80(x6)
 
-# Testcase 11:  rs1:x23(0x00de59f550f0fc2b), rs2:x25(0x03a8987936a98d74), result rd:x1(0x0000000000000001)
-li x23, MASK_XLEN(0x00de59f550f0fc2b)
-li x25, MASK_XLEN(0x03a8987936a98d74)
-SLTU x1, x23, x25
-sd x1, 88(x6)
+# Testcase 11:  rs1:x8(0xa31034dd4c4b91fe), rs2:x15(0x15a5712c5ac4b6c7), result rd:x21(0x0000000000000000)
+li x8, MASK_XLEN(0xa31034dd4c4b91fe)
+li x15, MASK_XLEN(0x15a5712c5ac4b6c7)
+SLTU x21, x8, x15
+sd x21, 88(x6)
 
 .EQU NUMTESTS,12
 

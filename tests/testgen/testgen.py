@@ -15,6 +15,8 @@ from random import randint
 from random import seed
 from random import getrandbits
 
+import pdb # debug this script
+
 ##################################
 # functions
 ##################################
@@ -47,8 +49,18 @@ def computeExpected(a, b, test, xlen):
     return a | b
   elif (test == "AND"):
     return a & b
+  elif (test == "SLL"):
+    return a << (b & (xlen - 1)) # mask to lower 5/6 bits
+  elif (test == "SRL"):
+    return a << (b & (xlen - 1)) # mask to lower 5/6 bits
+  elif (test == "SRA"):
+    return asigned >> (b & (xlen - 1))
+    # return (a >> b) if not (a & 2**(xlen-1)) else (a >> b) | (2**xlen-1 << min(0, (xlen - b)))
+
   else:
-    die("bad test name ", test)
+    print("warning: expected value not implemented for test: " + test)
+    return 0xDEADBEEF
+    # die("bad test name ", test)
   #  exit(1)
 
 def randRegs():
@@ -60,8 +72,37 @@ def randRegs():
   else:
       return reg1, reg2, reg3
 
-def writeVector(a, b, storecmd, xlen):
-  global testnum
+def writeVector_I_type(a, b, storecmd, xlen):
+  global testnum, test
+  reg1, _, reg3 = randRegs()
+
+  if test in ["SLLI", "SRLI", "SRAI"]:
+    # these instructions can accept an immmediate xlen-1
+    immediate = b & (xlen-1)
+  else:
+    # these need to be masked to signed 12 bit
+    immediate = b & (2**12 - 1)
+
+    # immediate is a 12-bit signed number. We want to write
+    # it in the instruction as a signed integer. So if
+    # the sign bit is set, make it a negative number to python.
+    if immediate & (2**11):
+      immediate = twoscomp(immediate, 12)
+
+  lines = "\n# Testcase " + str(testnum) + ":  rs1:x" + str(reg1) + "(" + formatstr.format(a)
+  lines = lines + "), imm:x" + "(" + formatstr.format(immediate) 
+  lines = lines + "), result rd:x" + str(reg3) + "(not computed)\n"
+  lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"  
+  lines = lines + test + " x" + str(reg3) + ", x" + str(reg1) + ", " + "{:d}".format(immediate) + "\n"
+  lines = lines + storecmd + " x" + str(reg3) + ", " + str(wordsize*testnum) + "(x6)\n"
+  f.write(lines)
+  testnum = testnum+1
+  
+def writeVector_R_type(a, b, storecmd, xlen):
+  global testnum, test
+  # ensure a and b are xlen wide. useful if testing word instructions.
+  a = a % 2**xlen
+  b = b % 2**xlen
   expected = computeExpected(a, b, test, xlen)
   expected = expected % 2**xlen # drop carry if necessary
   if (expected < 0): # take twos complement
@@ -83,7 +124,11 @@ def writeVector(a, b, storecmd, xlen):
 ##################################
 
 # change these to suite your tests
-tests = ["ADD", "SUB", "SLT", "SLTU", "XOR"]
+R_type_tests = ["ADD", "SUB", "SLT", "SLTU", "XOR",
+         "AND", "OR", "SLL", "SRL", "SRA"]
+I_type_tests = ["ADDI", "ANDI", "ORI", "XORI", "SLTI", "SLTIU", "SLLI", "SRLI", "SRAI"]
+RW_64_tests = ["ADDW", "SUBW", "SLLW", "SRLW", "SRAW"] # 64-bit only
+
 author = "David_Harris@hmc.edu & Katherine Parry"
 xlens = [32, 64]
 numrand = 3
@@ -99,10 +144,13 @@ for xlen in xlens:
   if (xlen == 32):
     storecmd = "sw"
     wordsize = 4
+    rw_tests = []
   else:
     storecmd = "sd"
     wordsize = 8
-  for test in tests:
+    rw_tests = RW_64_tests
+  for test in R_type_tests + I_type_tests + rw_tests:
+    writeVector = writeVector_I_type if test in I_type_tests else writeVector_R_type
 #    corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
 #            2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1]
     corners = [0, 1, 2**(xlen)-1]
@@ -128,7 +176,7 @@ for xlen in xlens:
     # print directed and random test vectors
     for a in corners:
       for b in corners:
-        writeVector(a, b, storecmd, xlen)
+        writeVector(a, b, storecmd, xlen if test not in rw_tests else 32)
     for i in range(0,numrand):
       a = getrandbits(xlen)
       b = getrandbits(xlen)
