@@ -44,7 +44,37 @@ module mul(
   // Execute Stage: Compute partial products
   //////////////////////////////
 
-  // insert stuff here for lab 5
+   logic               U, SU, S; // unsigned, signed x unsigned, signed;
+   logic               Am, Bm, Pm;
+   logic [`XLEN-2:0]   Aprime, Bprime, PA, PB;
+   logic [`XLEN*2-3:0] Pprime;
+
+   // one-bit logic for what the sign is
+   assign U  = Funct3E == 3'b011;
+   assign SU = Funct3E == 3'b010;
+   assign S  = (Funct3E == 3'b000 | Funct3E == 3'b001);
+
+   // dissect A & B
+   assign Am = ForwardedSrcAE[`XLEN-1];        // A sign
+   assign Bm = ForwardedSrcBE[`XLEN-1];        // B sign
+   assign Aprime = ForwardedSrcAE[`XLEN-2:0];  // A rest
+   assign Bprime = ForwardedSrcBE[`XLEN-2:0];  // B rest
+
+   // form dissected P 
+   assign Pprime = Aprime * Bprime;
+   assign Pm = Am & Bm;
+   assign PA = Bm ? Aprime : '0;
+   assign PB = Am ? Bprime : '0;
+
+   // generate partial products
+   assign PP1E = {2'b0, Pprime};
+   assign PP2E = {2'b0, (S ? ~PA : PA), {`XLEN-1{1'b0}}}; // only ~PA for sig x sig
+   assign PP3E = {2'b0, (U ? PB : ~PB), {`XLEN-1{1'b0}}}; // only PB for u x u 
+   assign PP4E = {~U, (SU ? ~Pm : Pm), {`XLEN-3{1'b0}}, S, SU, {`XLEN-1{1'b0}}}; 
+   // 1<<2N-1 for all except Unsigned.
+   // PM<<2N-2 for all except SU.
+   // 1 << N for signed only
+   // 1 << N-1 for SU Only. 
 
   //////////////////////////////
   // Memory Stage: Sum partial proudcts
